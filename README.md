@@ -6,7 +6,8 @@ For a beginner walkthrough, see [USER_GUIDE.md](USER_GUIDE.md).
 
 ## Python requirements
 
-- Python with `pip` is required. The tool was tested with Python **3.13.5**; other Python versions have not been verified. A virtual environment is optional.
+- **Tested platform:** The app has only been tested on **Windows with Python 3.13.5**. macOS, Linux, and other Python versions have not been tested.
+- Python with `pip` is required. A virtual environment is optional.
 - Install the packages listed in [`requirements.txt`](requirements.txt): NumPy ≥2.0, SciPy ≥1.11, openpyxl ≥3.1, and Matplotlib ≥3.8.
 
 From this folder in PowerShell, install the packages once:
