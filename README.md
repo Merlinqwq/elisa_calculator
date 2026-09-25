@@ -4,6 +4,17 @@ This local Python app imports a 96-well `.xlsx` reader export, lets you map well
 
 For a beginner walkthrough, see [USER_GUIDE.md](USER_GUIDE.md).
 
+## Python requirements
+
+- Python with `pip` is required. The tool was tested with Python **3.13.5**; other Python versions have not been verified. A virtual environment is optional.
+- Install the packages listed in [`requirements.txt`](requirements.txt): NumPy ≥2.0, SciPy ≥1.11, openpyxl ≥3.1, and Matplotlib ≥3.8.
+
+From this folder in PowerShell, install the packages once:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
 ## Start
 
 On Windows, double-click `start_elisa_tool.cmd` in this folder. It starts the local server and opens the app in your browser. Keep the command window open while using the tool.
@@ -11,7 +22,6 @@ On Windows, double-click `start_elisa_tool.cmd` in this folder. It starts the lo
 Alternatively, from this folder in PowerShell:
 
 ```powershell
-python -m pip install -r requirements.txt
 python -m elisa.server
 ```
 
