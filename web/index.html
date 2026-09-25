@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ELISA Analysis Tool</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="launch-warning" role="alert" style="display:none;background:#fff1d6;color:#743e00;border:2px solid #d99113;padding:14px 20px;font:16px/1.4 system-ui,Arial,sans-serif">
+    Open this app through its local Python server. Double-click <strong>start_elisa_tool.cmd</strong> in the project folder, or run <code>python -m elisa.server</code> there, then visit <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765/</a>.
+  </div>
+  <header><h1>ELISA Analysis Tool</h1><p>Local plate map, independent 3PL/4PL standard curves, and transparent QC</p></header>
+  <main>
+    <section class="panel">
+      <h2>1. Import plate</h2>
+      <div class="row"><label class="file-label">Plate reader .xlsx <input id="file" type="file" accept=".xlsx"></label><span id="file-info">No plate loaded</span></div>
+      <div id="sheet-choice" class="row"></div>
+      <div id="import-warnings" class="notice"></div>
+    </section>
+    <section class="panel">
+      <h2>2. Map wells</h2>
+      <p class="hint">Drag across the plate to select a rectangle. Hold Ctrl or ⌘ to add a disjoint selection. Click a well to select one.</p>
+      <div class="row"><strong id="selection-count">0 wells selected</strong><button id="clear-selection" type="button">Clear selection</button><button id="undo" type="button">Undo edit</button></div>
+      <div class="plate-scroll"><div id="plate" class="plate" role="grid" aria-label="96-well plate"></div></div>
+      <div id="selection-list" class="hint"></div>
+      <div id="editor-root"></div>
+    </section>
+    <section id="analysis-root" class="panel"></section>
+  </main>
+  <script src="app.js"></script>
+  <script>
+    if (location.protocol === "file:") {
+      document.getElementById("launch-warning").style.display = "block";
+      document.getElementById("file").disabled = true;
+    } else {
+      setTimeout(() => {
+        if (!window.ELISA_APP_READY) document.getElementById("launch-warning").style.display = "block";
+      }, 1000);
+    }
+  </script>
+</body></html>

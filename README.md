@@ -1,4 +1,4 @@
-# Local ELISA analysis tool
+# ELISA Analysis Tool
 
 This local Python app imports a 96-well `.xlsx` reader export, lets you map wells by pointer drag, fits independent 3PL or 4PL standard curves, and produces a report workbook plus a reusable layout JSON. It listens only on `127.0.0.1`; uploaded data stays on the local computer.
 
@@ -35,3 +35,7 @@ Open [http://127.0.0.1:8765/](http://127.0.0.1:8765/) in a browser. Do not open 
 - The workbook starts with `Concentration Plate`, then `Summary`, `Unknown Results`, `Well Results`, `Standards & QC`, `Standard Curves`, and `Settings`. The first sheet contains dilution-adjusted concentrations by well and uses `0` as a labeled below-range sentinel. Labeled standard curve plots and fitted numeric equations are in `Standard Curves`. Numeric results are stored at full calculated precision; rounding is only for display.
 
 The software reports exploratory curve QC, not assay validation. It does not estimate validated detection limits, automatically remove outliers, model censored overflow readings, or pool plates.
+
+## AI use disclosure
+
+This tool and its documentation were developed with assistance from OpenAI Codex, including code implementation, debugging, and review. The analysis methods and results should be independently validated against your assay requirements before scientific or clinical use.
