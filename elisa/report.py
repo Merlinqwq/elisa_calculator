@@ -110,8 +110,8 @@ def workbook_bytes(result: dict, layout: dict) -> bytes:
                         value = 0
                     elif well["measurement_status"] == "overflow":
                         value = "OVRFLW"
-                    elif well["result_status"] == "invalid_curve":
-                        value = "QC FAIL"
+                    elif well["result_status"] in ("invalid_curve", "no_fit", "missing_curve"):
+                        value = "NO FIT"
                     else:
                         value = "—"
             else:
@@ -137,13 +137,13 @@ def workbook_bytes(result: dict, layout: dict) -> bytes:
         for column in range(1, 13):
             well = by_well[f"{row_name}{column}"]
             curve = curve_by_id.get(well["curve_id"])
-            if well["role"] == "unknown" and (well["result_status"] != "ok" or
-                                               (curve and curve["qc_status"] == "fail")):
+            curve_has_warning = curve is not None and (curve.get("status") != "valid" or curve.get("qc_status") == "fail")
+            if well["role"] == "unknown" and (well["result_status"] != "ok" or curve_has_warning or well.get("flags")):
                 cell = plate.cell(row_number, column + 1)
                 cell.fill = PatternFill("solid", fgColor="FFE3AD")
+                flag_str = "; ".join(well.get("flags", [])) or "none"
                 cell.comment = Comment(
-                    f"{well['well']}: {well['result_status']}; curve QC "
-                    f"{curve['qc_status'] if curve else 'unavailable'}. See detailed sheets.",
+                    f"{well['well']}: status {well['result_status']}; flags: {flag_str}. See detailed sheets.",
                     "ELISA tool")
     summary = wb.create_sheet("Summary")
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")

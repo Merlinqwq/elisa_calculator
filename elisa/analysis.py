@@ -144,26 +144,21 @@ def analyze(imported: dict, raw_layout: dict) -> dict:
         links = {(r["curve_id"], r["dilution_factor"]) for r in included}
         flags = []
         mixed = len(links) > 1
-        if mixed:
-            flags.append("Sample group mixes curves or dilution factors; split explicitly.")
         curve_id, dilution = next(iter(links)) if len(links) == 1 else ("", None)
         curve = curve_map.get(curve_id)
-        if curve is None and not mixed:
-            flags.append("Assigned curve is missing.")
-        elif curve is not None and curve["status"] != "valid":
-            flags.append("Assigned curve is invalid; see curve QC.")
-        if not included:
-            flags.append("No included replicates.")
+        curve_has_warning = curve is not None and (curve.get("status") != "valid" or curve.get("qc_status") == "fail")
+
         per_well = []
         for row in included:
             if mixed:
                 own_curve = curve_map.get(row["curve_id"])
+                own_has_warning = own_curve is not None and (own_curve.get("status") != "valid" or own_curve.get("qc_status") == "fail")
                 if row["measurement_status"] != "numeric":
                     row["result_status"] = row["measurement_status"]
                 elif row["corrected_od"] is None:
                     row["result_status"] = "blank_correction_unavailable"
-                elif own_curve is None or own_curve["status"] != "valid" or not observed_positive.get(row["curve_id"]):
-                    row["result_status"] = "invalid_curve"
+                elif own_curve is None or not own_curve.get("parameters") or not observed_positive.get(row["curve_id"]):
+                    row["result_status"] = "no_fit" if own_curve else "missing_curve"
                 else:
                     concentration, status = invert_in_working_range(row["corrected_od"], own_curve,
                                                                     observed_positive[row["curve_id"]])
@@ -171,15 +166,20 @@ def analyze(imported: dict, raw_layout: dict) -> dict:
                     row["well_adjusted_concentration"] = (concentration * row["dilution_factor"]
                                                           if concentration is not None else None)
                     row["result_status"] = status
+                    if concentration is not None:
+                        if own_has_warning:
+                            row["flags"].append("Assigned curve failed QC / fit checks; concentration calculated anyway.")
+                    elif status != "ok":
+                        row["flags"].append(status.replace("_", " "))
                 row["flags"].append("Mixed sample group; well result only. Split group for a sample result.")
             elif row["measurement_status"] != "numeric":
                 row["result_status"] = row["measurement_status"]
             elif row["corrected_od"] is None:
                 row["result_status"] = "blank_correction_unavailable"
-            elif curve is None or curve["status"] != "valid" or row["curve_id"] != curve_id:
-                row["result_status"] = "invalid_curve"
+            elif curve is None or not curve.get("parameters") or row["curve_id"] != curve_id:
+                row["result_status"] = "no_fit" if curve else "missing_curve"
             elif not observed_positive.get(curve_id):
-                row["result_status"] = "invalid_curve"
+                row["result_status"] = "no_standards"
             else:
                 concentration, status = invert_in_working_range(row["corrected_od"], curve,
                                                                 observed_positive[curve_id])
@@ -187,15 +187,31 @@ def analyze(imported: dict, raw_layout: dict) -> dict:
                 row["well_adjusted_concentration"] = (concentration * row["dilution_factor"]
                                                       if concentration is not None else None)
                 row["result_status"] = status
-                if status != "ok":
+                if concentration is not None:
+                    if curve_has_warning:
+                        row["flags"].append("Assigned curve failed QC / fit checks; concentration calculated anyway.")
+                elif status != "ok":
                     row["flags"].append(status.replace("_", " "))
             if row["well_concentration"] is not None:
                 per_well.append(row["well_concentration"])
             else:
                 flags.append(f"{row['well']}: {row['result_status']}.")
+
+        blocking_errors = []
+        if mixed:
+            blocking_errors.append("Sample group mixes curves or dilution factors; split explicitly.")
+        if curve is None and not mixed:
+            blocking_errors.append("Assigned curve is missing.")
+        elif curve is not None and not curve.get("parameters"):
+            blocking_errors.append("Assigned curve could not be fitted.")
+        if not included:
+            blocking_errors.append("No included replicates.")
+        if len(per_well) != len(included):
+            blocking_errors.append(f"Not all included replicates could be quantified ({len(per_well)}/{len(included)} valid).")
+
         od_values = [r["corrected_od"] for r in included if r["corrected_od"] is not None] if not mixed else []
         mean_od, sd_od, cv_od = _stats(od_values)
-        all_valid = bool(included) and len(per_well) == len(included) and not flags
+        all_valid = bool(included) and not blocking_errors
         method_a = method_b = None
         status_b = "not_calculated"
         if all_valid:
@@ -209,9 +225,13 @@ def analyze(imported: dict, raw_layout: dict) -> dict:
             flags.append(f"OD CV {cv_od:.1f}% exceeds warning threshold.")
         if cv_conc is not None and cv_conc > settings["cv_warning_pct"]:
             flags.append(f"Concentration CV {cv_conc:.1f}% exceeds warning threshold.")
-        qc_warning = curve is not None and curve["qc_status"] == "fail"
-        if qc_warning:
+        if curve_has_warning:
             flags.append("Assigned curve failed standard QC; inspect curve diagnostics before using this concentration.")
+
+        sample_status = "unquantifiable"
+        if primary is not None:
+            sample_status = "quantified_qc_warning" if curve_has_warning else "quantified"
+
         unknown_results.append({
             "sample_id": sample_id, "replicate_group": group_name, "curve_id": curve_id,
             "units": curve["units"] if curve else None, "dilution_factor": dilution,
@@ -226,8 +246,8 @@ def analyze(imported: dict, raw_layout: dict) -> dict:
             "partial_valid_mean_concentration": mean(per_well) if per_well and not all_valid and not mixed else None,
             "sd_concentration_method_a": sd_conc,
             "cv_concentration_method_a_pct": cv_conc,
-            "status": ("quantified_qc_warning" if qc_warning else "quantified") if primary is not None else "unquantifiable",
-            "flags": flags,
+            "status": sample_status,
+            "flags": flags + [b for b in blocking_errors if b not in flags],
         })
     for row in wells:
         if row["result_status"] == "pending":

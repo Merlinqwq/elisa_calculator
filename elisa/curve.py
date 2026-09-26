@@ -192,8 +192,10 @@ def fit_curve(observations: list[dict], curve_id: str, units: str, settings: dic
 
 
 def invert_in_working_range(y: float, curve: dict, observed_positive_od: list[float]) -> tuple[float | None, str]:
-    if curve["status"] != "valid":
-        return None, "invalid_curve"
+    if not curve.get("parameters") or curve.get("response_low") is None or curve.get("response_high") is None:
+        return None, "no_fit"
+    if not observed_positive_od:
+        return None, "no_standards"
     low_response = min(curve["response_low"], curve["response_high"])
     high_response = max(curve["response_low"], curve["response_high"])
     observed_low, observed_high = min(observed_positive_od), max(observed_positive_od)

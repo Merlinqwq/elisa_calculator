@@ -1,31 +1,73 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ELISA Analysis Tool</title><link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ELISA Analysis Tool</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="launch-warning" role="alert" style="display:none;background:#fff1d6;color:#743e00;border:2px solid #d99113;padding:14px 20px;font:16px/1.4 system-ui,Arial,sans-serif">
     Open this app through its local Python server. Double-click <strong>start_elisa_tool.cmd</strong> in the project folder, or run <code>python -m elisa.server</code> there, then visit <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765/</a>.
   </div>
-  <header><h1>ELISA Analysis Tool</h1><p>Local plate map, independent 3PL/4PL standard curves, and transparent QC</p></header>
+
+  <header>
+    <div class="header-inner">
+      <h1>ELISA Analysis Tool</h1>
+    </div>
+  </header>
+
   <main>
+    <!-- STEP 1: IMPORT PLATE -->
     <section class="panel">
-      <h2>1. Import plate</h2>
-      <div class="row"><label class="file-label">Plate reader .xlsx <input id="file" type="file" accept=".xlsx"></label><span id="file-info">No plate loaded</span></div>
+      <div class="panel-header">
+        <h2 class="panel-title"><span class="step-pill">Step 1</span> Import Reader Plate</h2>
+      </div>
+      <div class="dropzone-area">
+        <label class="file-label primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Choose Plate Reader .xlsx
+          <input id="file" type="file" accept=".xlsx">
+        </label>
+        <span id="file-info" class="file-info-badge">No plate loaded</span>
+        <span class="hint">Upload a 96-well reader export. The software auto-detects rows A–H and columns 1–12.</span>
+      </div>
       <div id="sheet-choice" class="row"></div>
-      <div id="import-warnings" class="notice"></div>
+      <div id="import-warnings" class="notice" style="display:none;"></div>
     </section>
+
+    <!-- STEP 2: MAP WELLS -->
     <section class="panel">
-      <h2>2. Map wells</h2>
-      <p class="hint">Drag across the plate to select a rectangle. Hold Ctrl or ⌘ to add a disjoint selection. Click a well to select one.</p>
-      <div class="row"><strong id="selection-count">0 wells selected</strong><button id="clear-selection" type="button">Clear selection</button><button id="undo" type="button">Undo edit</button></div>
-      <div class="plate-scroll"><div id="plate" class="plate" role="grid" aria-label="96-well plate"></div></div>
+      <div class="panel-header">
+        <h2 class="panel-title"><span class="step-pill">Step 2</span> Map & Annotate Plate</h2>
+        <div class="row" style="margin:0;">
+          <strong id="selection-count">0 wells selected</strong>
+          <button id="select-all" type="button" class="btn-sm">Select all</button>
+          <button id="invert-selection" type="button" class="btn-sm">Invert</button>
+          <button id="clear-selection" type="button" class="btn-sm">Clear</button>
+          <button id="undo" type="button" class="btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Undo edit
+          </button>
+        </div>
+      </div>
+
+      <p class="hint">Click or drag across the microplate to select wells. Hold Ctrl / ⌘ to add disjoint regions. Click row (A–H) or column (1–12) headers to select an entire axis.</p>
+
+      <div class="plate-wrapper">
+        <div class="plate-scroll">
+          <div id="plate" class="plate" role="grid" aria-label="96-well plate"></div>
+        </div>
+      </div>
+
       <div id="selection-list" class="hint"></div>
       <div id="editor-root"></div>
     </section>
+
+    <!-- STEP 3: ANALYZE AND EXPORT -->
     <section id="analysis-root" class="panel"></section>
   </main>
+
   <script src="app.js"></script>
   <script>
     if (location.protocol === "file:") {
@@ -37,4 +79,5 @@
       }, 1000);
     }
   </script>
-</body></html>
+</body>
+</html>
