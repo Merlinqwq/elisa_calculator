@@ -60,9 +60,4 @@ The software reports exploratory curve QC, not assay validation. It does not est
 
 ## AI use disclosure
 
-This tool and its documentation were developed with AI assistance:
-
-- **OpenAI Codex:** initial implementation, debugging, documentation, code review, and calculation/workflow checks.
-- **Google Gemini through Antigravity:** frontend redesign, interface refinements, and changes that retain flagged concentrations when standard curve QC or fit checks fail.
-
-AI-assisted review included separate plan/code reviews and numerical checks against reference concentrations and independently generated synthetic data. These software checks do not establish assay validity. Validate the analysis methods and results against your assay requirements before scientific or clinical use.
+This tool and its documentation were developed with AI assistance from OpenAI Codex and Google Gemini through Antigravity.
